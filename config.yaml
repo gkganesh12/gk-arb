@@ -1,0 +1,128 @@
+# GK Arb Configuration
+# ====================
+
+api:
+  # Polymarket API endpoints
+  polymarket_rest_url: "https://clob.polymarket.com"
+  polymarket_ws_url: "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+  gamma_api_url: "https://gamma-api.polymarket.com"
+  
+  # Kalshi API endpoint (public, no auth needed for market data)
+  kalshi_api_url: "https://api.elections.kalshi.com/trade-api/v2"
+  
+  # Authentication (replace with your credentials)
+  api_key: "YOUR_API_KEY_HERE"
+  api_secret: "YOUR_API_SECRET_HERE"
+  passphrase: "YOUR_PASSPHRASE_HERE"
+  
+  # Wallet configuration
+  private_key: "YOUR_PRIVATE_KEY_HERE"
+  
+  # Request settings
+  timeout_seconds: 30
+  max_retries: 3
+  retry_delay_seconds: 1
+
+trading:
+  # Markets to trade (empty list = auto-discover active markets)
+  markets: []
+  
+  # Arbitrage settings
+  min_edge: 0.01           # 1% edge required for bundle arbitrage
+  bundle_arb_enabled: true
+  
+  # Market-making settings
+  min_spread: 0.05         # 5c spread to act as market maker
+  tick_size: 0.01          # Minimum price increment
+  mm_enabled: false        # Disabled for real data (markets too efficient)
+  
+  # Order sizing - SMALL for $50 budget
+  default_order_size: 5    # $5 per order
+  min_order_size: 2        # $2 minimum
+  max_order_size: 10       # $10 max per order
+  
+  # Execution settings
+  slippage_tolerance: 0.02  # Max allowed slippage from signal to execution
+  order_timeout_seconds: 60 # Cancel unfilled orders after this time
+  
+  # Fees
+  # Real Polymarket markets carry their own fee schedule (Gamma feeSchedule:
+  # fee = shares * rate * p * (1 - p)), which is used automatically. These flat
+  # rates are only a fallback when a market's schedule is unknown (e.g. simulation).
+  maker_fee_bps: 0          # Makers pay no fees on Polymarket
+  taker_fee_bps: 150        # Fallback 1.5% taker fee
+  estimated_gas_per_order: 0  # CLOB orders are signed off-chain; Polymarket pays settlement gas
+
+  # Cross-platform hedged arbitrage (buy YES on one venue + NO on the other)
+  cross_platform_min_edge: 0.02      # 2c per $1 unit after both venues' fees
+  cross_platform_poll_seconds: 5     # How often to re-price matched pairs
+  cross_platform_max_pairs: 200      # Matched pairs to keep re-pricing
+  cross_platform_max_contracts: 100  # Max units per leg
+  kalshi_fee_multiplier: 1.0         # Kalshi fee = ceil(0.07 * mult * C * P * (1 - P))
+
+risk:
+  # Position limits - CONSERVATIVE for $50 budget
+  max_position_per_market: 15    # Max $15 per market
+  max_global_exposure: 50        # Max $50 total (your starting amount!)
+  
+  # Loss limits - tight stops
+  max_daily_loss: 10             # Stop if losing $10/day
+  max_drawdown_pct: 0.15         # 15% max drawdown from peak
+  
+  # Market filters - DISABLED for testing (volume data comes from Gamma API)
+  trade_only_high_volume: false   # Disabled - we verify via Gamma API instead
+  min_24h_volume: 10000           # Minimum 24h volume
+  
+  # Market whitelist/blacklist (optional)
+  whitelist: []                  # If non-empty, only trade these markets
+  blacklist: []                  # Never trade these markets
+  
+  # Kill switch
+  kill_switch_enabled: true
+  auto_unwind_on_breach: false
+
+mode:
+  # Trading mode: "live" or "dry_run"
+  trading_mode: "dry_run"
+  
+  # Data mode: "real" or "simulation"
+  # - "real": Fetch actual order books from Polymarket CLOB API
+  # - "simulation": Generate fake data with opportunities (for demos/screenshots)
+  data_mode: "real"  # <-- CHANGE TO "simulation" FOR DEMOS
+  
+  # Cross-platform arbitrage (Polymarket + Kalshi)
+  cross_platform_enabled: true    # Enable cross-platform arbitrage detection
+  kalshi_enabled: true            # Enable Kalshi market monitoring
+  min_match_similarity: 0.6       # Minimum similarity score for market matching (0-1)
+  
+  # Dry run settings
+  dry_run_initial_balance: 10000
+  simulate_fills: true
+  fill_probability: 0.8          # Probability of order being filled in dry run
+
+logging:
+  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  console_level: "INFO"
+  file_level: "DEBUG"
+  
+  # Log files
+  log_dir: "logs"
+  main_log_file: "bot.log"
+  trades_log_file: "trades.log"
+  opportunities_log_file: "opportunities.log"
+  
+  # Log rotation
+  max_log_size_mb: 50
+  backup_count: 5
+
+monitoring:
+  # Portfolio snapshot interval (seconds)
+  snapshot_interval: 60
+  
+  # Heartbeat interval (seconds)
+  heartbeat_interval: 30
+  
+  # Performance metrics
+  track_latency: true
+  track_fill_rates: true
+
